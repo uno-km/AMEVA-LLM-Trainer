@@ -488,5 +488,17 @@ LoRA 어댑터 가중치를 원본 베이스 모델에 합쳐 단일 가중치 �
 | **단점 (Cons)** | - GUI 특유의 핑거팁 조작 편의성 상실<br>- 사용자가 CLI 번호 메뉴를 선택하고 학습 데이터 디렉토리 경로를 직접 키보드로 인가하는 초기 학습 인지 부하 존재 |
 | **획득 이익 (Benefits)** | - **안정성**: 24시간 이상 CPU Full-Load 상태에서 훈련이 장기 가동되어도 프로세스 동결이나 메모리 누수 없는 무장애 구동 실현<br>- **설명성**: CLI 창이 종료되어도 `logs/ameva_llm.db`를 조회하여 과거 모든 훈련 이력을 시각적으로 복원 가능 |
 
+## 👨‍💻 Tech Stack
+- **UI Architecture**: Premium Interactive CLI (Rich & Plotext) + FastAPI REST API
+- **Infrastructure**: Single setup.py route launcher & local isolated virtual environment
+- **Inference**: llama.cpp GGUF converter & K-Quantizer (q4_0)
+- **Engine Core**: Qwen 2.5 Instruct (FP32 CPU Mode with PEFT/LoRA)
+- **Backend**: SQLite (timeout=30.0 concurrency defense) & Threaded Watchdog
+
+---
+
+> **Contact**: zhfldk014745@naver.com
+> **AMEVA v5.6 "Singularity"** - *Precision measurement for the Edge AI age.*
+
 ---
 > **"데이터가 장인정신을 만나면, 인공지능은 예술이 된다."** - AMEVA LLM Project

@@ -1,0 +1,35 @@
+# Virtual Environment
+venv/
+.venv/
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs & DB
+logs/
+*.db
+
+# Model Outputs
+outputs/
+models/gguf/
+
+# Third Party Binaries
+third_party/
+
+# Distribution
+*.egg-info/
+dist/
+build/

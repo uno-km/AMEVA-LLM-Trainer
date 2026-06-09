@@ -1,0 +1,27 @@
+# AMEVA-LLM-Trainer Dependencies
+# CPU-optimized LLM Fine-tuning Pipeline
+
+# Core AI Stack
+torch
+transformers
+peft
+accelerate
+datasets
+sentencepiece
+numpy
+
+# SQLite & Backend API
+fastapi
+uvicorn
+requests
+psutil
+plotext
+
+# MLOps Telemetry
+pandas
+pyyaml
+tqdm
+rich
+win10toast
+gguf
+python-docx

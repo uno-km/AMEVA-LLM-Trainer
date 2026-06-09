@@ -1,0 +1,24 @@
+# AMEVA-LLM-Trainer 학습 설정
+# 이 파일을 수정하면 src/core/config.py의 기본값이 덮어씌워진다.
+
+# ---- 모델 ----
+model_id: "Qwen/Qwen2.5-0.5B-Instruct"
+
+# ---- 학습 ----
+learning_rate: 0.0001
+max_steps: 500
+batch_size: 1
+gradient_accumulation_steps: 8
+max_seq_length: 512
+logging_steps: 10
+save_steps: 100
+
+# ---- LoRA ----
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.05
+lora_target_modules:
+  - q_proj
+  - v_proj
+  - k_proj
+  - o_proj

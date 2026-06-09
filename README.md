@@ -226,7 +226,7 @@ def stop_task(task_in: TaskStop):
 
 ```mermaid
 graph TD
-    subgraph Client Layer (Premium CLI)
+    subgraph "Client Layer (Premium CLI)"
         A[cli/cli.py Launcher] -->|User Input Menu| B(CLI View Panels)
         B -->|1. Task List| C[cli/views/tasks.py]
         B -->|3. Monitor UI| D[cli/views/monitor.py]
@@ -237,7 +237,7 @@ graph TD
         C & D & E & F & G -->|HTTP Requests| H[cli/client/api_client.py]
     end
 
-    subgraph Backend API Layer (FastAPI Server - Port 8001)
+    subgraph "Backend API Layer (FastAPI Server - Port 8001)"
         H -->|REST API| I[src/backend/main.py]
         I -->|Route Dispatch| J{API Router}
         
@@ -249,7 +249,7 @@ graph TD
         N -->|Poll process.poll| M
     end
 
-    subgraph Core & Data Engine (Train Pipeline)
+    subgraph "Core & Data Engine (Train Pipeline)"
         M -->|1. Setup Constants| O[src/core/config.py]
         M -->|2. Streaming Feed| P[src/data/processor.py]
         M -->|3. Model Instantiation| Q[src/models/loader.py]
@@ -257,7 +257,7 @@ graph TD
         R -->|SQLite Metrics Sync| S[src/training/callbacks.py]
     end
 
-    subgraph Persistence Layer (Database & Storage)
+    subgraph "Persistence Layer (Database & Storage)"
         S -->|DB Connection timeout=30.0| T[(SQLite: logs/ameva_llm.db)]
         K & L -->|Query Details| T
         R -->|Save LoRA adapter| U[outputs/lora_adapter]

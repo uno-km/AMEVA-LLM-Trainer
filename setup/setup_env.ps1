@@ -7,7 +7,7 @@ Write-Host "   AMEVA-LLM-Trainer Windows Environment Setup"
 Write-Host "=" * 60
 Write-Host ""
 
-$ROOT = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+$ROOT = Split-Path -Parent $PSScriptRoot
 if (-not $ROOT) { $ROOT = (Get-Location).Path }
 Set-Location $ROOT
 

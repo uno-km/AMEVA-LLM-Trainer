@@ -11,10 +11,10 @@
 
 ### 2.1. 데이터 획득 및 전처리 알고리즘 (Data Engineering & Tokenization)
 본 파이프라인은 비정형 텍스트 데이터로부터 고품질 학습 코퍼스를 추출하고 토큰화하기 위해 고도의 텍스트 가공 체계와 스트리밍 입출력 구조를 통합 구축하였다.
-- **ChatML Standard Formatting (대화 데이터 표준 정제)**: 학습을 위해 입력받은 비정형 일반 텍스트나 원시 JSON/JSONL 형식의 데이터를 OpenAI의 ChatML(Chat Markup Language) 표준 형식으로 변환 및 필터링한다. 최소 user와 assistant 역할(role)의 쌍이 존재하는지 검증하며, 누락되거나 내용이 없는 기형적 메시지를 배제하여 훈련 데이터셋의 노이즈 밀도를 $1\%$ 미만으로 억제한다.
+- **ChatML Standard Formatting (대화 데이터 표준 정제)**: 학습을 위해 입력받은 비정형 일반 텍스트나 원시 JSON/JSONL 형식의 데이터를 OpenAI의 ChatML(Chat Markup Language) 표준 형식으로 변환 및 필터링한다. 최소 user와 assistant 역할(role)의 쌍이 존재하는지 검증하며, 누락되거나 내용이 없는 기형적 메시지를 배제하여 훈련 데이터셋의 노이즈 밀도를 1% 미만으로 억제한다.
 - **Flat-Memory Streaming via IterableDataset (메모리 평탄성 유지 스트리밍)**: 대용량 데이터 또는 대량의 텍스트 말뭉치 로딩으로 인한 Windows 환경에서의 `WinError 87` 및 RAM OOM(Out of Memory) 에러를 근본적으로 방지하기 위해 **IterableDataset** 방식을 구현한다. 디스크 파일로부터 한 줄씩 실시간 스트리밍하여 토큰화하고 학습 그래프에 피딩하므로 가상 메모리 스왑 없이 16GB 이하의 초저스펙 CPU 로컬 환경에서도 메모리 점유율을 수평적(Flat)으로 유지한다.
 - **Causal Language Modeling Loss Masking (인과적 언어 모델 손실 마스킹)**: Qwen2.5와 같은 AutoRegressive Causal LM의 학습에서 패딩(Padding) 토큰에 가중치를 부여하지 않기 위해 토큰 레이블 수준에서 마스킹 처리를 수행한다. 토크나이저의 `pad_token_id`와 일치하는 인덱스를 학습 Loss 계산 시 무시되도록 PyTorch Cross-Entropy의 무시 인덱스인 `-100`으로 강제 대체한다.
-  $$ \mathcal{L}_{CE} = -\sum_{i} y_i \log p_i \quad (\text{where } y_i = -100 \text{ is ignored}) $$
+  Loss_CE = -sum( y_i * log(p_i) ) (where y_i = -100 is ignored)
 - **Tokenizer Template Integration (자동 대화 템플릿 주입)**: `transformers.AutoTokenizer` 모듈을 격리 환경에서 호출하여 주파수를 텍스트 특징 벡터로 변환하는 대신, `apply_chat_template` 메서드를 통해 모델의 학습 환경과 완벽히 일치하는 특수 토큰(`<|im_start|>`, `<|im_end|>`, `<|im_sep|>`) 구조를 주입한다.
 
   ```python
@@ -26,9 +26,9 @@
 
 ### 2.2. 모델 아키텍처 및 학습 전략 (Fine-Tuning Methodology)
 본 프로젝트는 OpenAI의 Whisper 대신 Qwen2.5 모델(Decoder-only Transformer 기반 Causal Language Model 구조)을 베이스로 하며, 효율적인 도메인 적응을 위해 PEFT 전략을 채택하였다.
-- **LoRA (Low-Rank Adaptation) Theory**: 모델의 전체 파라미터 $W \in \mathbb{R}^{d \times k}$를 고정한 채, 저차원 행렬 $A$와 $B$의 곱으로 표현되는 업데이트 행렬 $\Delta W$만을 학습시킨다. 이는 다음과 같은 가중치 업데이트 식을 따른다:
-  $$ W_{updated} = W_0 + \Delta W = W_0 + BA \quad (\text{where } B \in \mathbb{R}^{d \times r}, A \in \mathbb{R}^{r \times k}, r \ll d, k) $$
-  이를 통해 학습 파라미터 수를 기존 대비 $1\%$ 미만으로 줄이면서도 도메인 특화 용어를 정밀하게 캡처한다. 본 시스템에서는 `q_proj`, `v_proj`, `k_proj`, `o_proj` 레이어를 타겟 모듈로 설정하여 LoRA 가중치를 주입한다.
+- **LoRA (Low-Rank Adaptation) Theory**: 모델의 전체 파라미터 W in R^(d x k)를 고정한 채, 저차원 행렬 A와 B의 곱으로 표현되는 업데이트 행렬 ΔW만을 학습시킨다. 이는 다음과 같은 가중치 업데이트 식을 따른다:
+  W_updated = W_0 + ΔW = W_0 + B * A (where B is d x r, A is r x k, r << d, k)
+  이를 통해 학습 파라미터 수를 기존 대비 1% 미만으로 줄이면서도 도메인 특화 용어를 정밀하게 캡처한다. 본 시스템에서는 `q_proj`, `v_proj`, `k_proj`, `o_proj` 레이어를 타겟 모듈로 설정하여 LoRA 가중치를 주입한다.
 
   ```python
   # [src/models/loader.py:L32-L41] 베이스 모델에 LoRA 어댑터를 주입하는 실체 구현체
@@ -372,7 +372,7 @@ python setup.py
     3. `requirements.txt`에 명시된 핵심 AI 패키지를 venv 내부로 자동 설치 완료한다.
   - **`setup/setup_env.sh` (Unix/Linux/macOS)**:
     1. 호스트 내 파이썬 환경을 진단하여 가상 가동 venv 환경을 생성 및 소싱한다.
-    2. 사용 중인 쉘 환경 파일(`.bashrc` 혹은 `.zshrc`)을 추적하여 `HF_HOME` 캐시 디렉토리(`$HOME/.ameva/models/llm`)를 환경 변수 스크립트로 자동 등록한다.
+    2. 사용 중인 쉘 환경 파일(`.bashrc` 혹은 `.zshrc`)을 추적하여 `HF_HOME` 캐시 디렉토리(`HOME/.ameva/models/llm`)를 환경 변수 스크립트로 자동 등록한다.
     3. pip 모듈들을 무결 상태로 빌드 적재한다.
 
 ---
@@ -417,7 +417,7 @@ LoRA 어댑터 가중치를 원본 베이스 모델에 합쳐 단일 가중치 �
 ## 6. 실험 로드맵 및 검증 전략 (Experimental Roadmap & Methodology)
 
 ### 6.1. 실험 설계 원칙 (Design of Experiments)
-학습 파라미터(Learning Rate, Batch Size, Optimizer)의 정적 제어를 원칙으로 삼으며, 오직 독립 변수로서 **"모델 크기(Qwen2.5-0.5B vs 1.5B)"**와 **"데이터 정제 레벨(Lv.1 ~ Lv.3)"**만을 변형하여 목적 함수인 $\min(\text{Loss})$ 및 문장 복원 정확도 향상을 추구한다.
+학습 파라미터(Learning Rate, Batch Size, Optimizer)의 정적 제어를 원칙으로 삼으며, 오직 독립 변수로서 **"모델 크기(Qwen2.5-0.5B vs 1.5B)"**와 **"데이터 정제 레벨(Lv.1 ~ Lv.3)"**만을 변형하여 목적 함수인 \min(\text{Loss})$ 및 문장 복원 정확도 향상을 추구한다.
 - **평가 메트릭**: 학습 Loss의 수렴 속도 및 문장 구조의 자연성(Perplexity 등).
 
 ### 6.2. 실험 단계별 가설 및 목표 (Phased Hypotheses)

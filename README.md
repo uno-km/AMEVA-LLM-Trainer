@@ -497,7 +497,7 @@ LoRA 어댑터 가중치를 원본 베이스 모델에 합쳐 단일 가중치 �
 
 ---
 
-> **Contact**: zhfldk014745@naver.com
+> **Contact**: amv.foundation.kr@gmail.com
 > **AMEVA v5.6 "Singularity"** - *Precision measurement for the Edge AI age.*
 
 ---
